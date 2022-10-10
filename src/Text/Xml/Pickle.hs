@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 -- | Some utility functions for using hxt picklers.
 module Text.Xml.Pickle
   ( toXML
@@ -17,7 +18,7 @@ toXML = showPickled []
 
 -- | Parse a string containing xml to a value. On parse failure, will
 -- call `error`.
-fromXML :: XmlPickler a => String -> a
+fromXML :: (XmlPickler a, MonadFail Identity) => String -> a
 fromXML = runIdentity . fromXMLM
 
 -- | Parse a string containing xml to a value, or `Nothing` if the
@@ -34,7 +35,7 @@ eitherFromXML text =
     [x]   -> unpickleDoc' xpickle x
     (_:_) -> Left "Multiple parses in eitherFromXML."
 
-fromXMLM :: (Monad m, XmlPickler a) => String -> m a
+fromXMLM :: (Monad m, XmlPickler a, MonadFail m) => String -> m a
 fromXMLM text = case runLA (removeAllWhiteSpace . xread) text of
   []    -> fail "Failed to parse XML in fromXMLM."
   [x]   -> either fail return $ unpickleDoc' xpickle x
